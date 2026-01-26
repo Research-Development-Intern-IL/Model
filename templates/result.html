@@ -1,15 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Transcription & Summary Results</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transcription & Summary Results</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      background: #fff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 0.5s ease;
+    }
+
+    h2 {
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 5px;
+      margin-top: 30px;
+    }
+
+    p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      white-space: pre-line;
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 10px 20px;
+      background-color: #3498db;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+    }
+
+    a:hover {
+      background-color: #2980b9;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Optional loader */
+    .loader {
+      display: none;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3498db;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
     <h2>Transcription Result</h2>
-    <p>{{ transcription }}</p>
+    <p id="transcription">{{ transcription }}</p>
 
     <h2>Summary</h2>
-    <p>{{ summary }}</p>
+    <p id="summary">{{ summary }}</p>
 
-    <a href="/">Go Back</a>
+    <div class="loader" id="loader"></div>
+
+    <a href="/" onclick="showLoader()">Go Back</a>
+  </div>
+
+  <script>
+    function showLoader() {
+      const loader = document.getElementById('loader');
+      loader.style.display = 'block';
+    }
+
+    // Optional animation on load
+    window.addEventListener('DOMContentLoaded', () => {
+      const summary = document.getElementById('summary');
+      summary.style.opacity = 0;
+      setTimeout(() => {
+        summary.style.transition = 'opacity 1s ease';
+        summary.style.opacity = 1;
+      }, 200);
+    });
+  </script>
 </body>
 </html>

@@ -2,6 +2,85 @@
 <html>
 <head>
     <title>AI Audio Transcription & Summarization</title>
+    <style>
+        /* Reset dan dasar */
+        * {
+          box-sizing: border-box;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          margin: 0;
+          padding: 0;
+        }
+
+        body {
+          background: #f4f7fa;
+          color: #333;
+          padding: 30px;
+          max-width: 600px;
+          margin: 0 auto;
+        }
+
+        h2 {
+          margin-bottom: 15px;
+          color: #222;
+          font-weight: 600;
+          border-bottom: 2px solid #6c63ff;
+          padding-bottom: 8px;
+        }
+
+        form {
+          margin-bottom: 40px;
+          background: white;
+          padding: 20px 25px;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+        }
+
+        input[type="file"] {
+          display: block;
+          margin-bottom: 15px;
+          font-size: 16px;
+        }
+
+        button {
+          background-color: #6c63ff;
+          border: none;
+          color: white;
+          padding: 12px 25px;
+          border-radius: 6px;
+          font-size: 16px;
+          cursor: pointer;
+          transition: background-color 0.3s ease;
+          user-select: none;
+          box-shadow: 0 3px 6px rgb(108 99 255 / 0.5);
+        }
+
+        button:disabled {
+          background-color: #aaa;
+          cursor: not-allowed;
+          box-shadow: none;
+        }
+
+        button:hover:not(:disabled) {
+          background-color: #5848c2;
+        }
+
+        #startRecording, #stopRecording {
+          margin-right: 10px;
+        }
+
+        /* Area feedback hasil server */
+        #responseArea {
+          margin-top: 30px;
+          background-color: #eef0ff;
+          padding: 15px;
+          border-radius: 6px;
+          font-size: 15px;
+          color: #333;
+          box-shadow: inset 0 0 10px #c5c9ff;
+          white-space: pre-wrap;
+          min-height: 40px;
+        }
+    </style>
 </head>
 <body>
     <h2>Upload Audio File for Transcription & Summarization</h2>
@@ -14,43 +93,60 @@
     <button id="startRecording">Start Recording</button>
     <button id="stopRecording" disabled>Stop Recording</button>
 
+    <div id="responseArea"></div>
+
     <script>
         let mediaRecorder;
         let audioChunks = [];
 
-        document.getElementById("startRecording").onclick = async function() {
+        const startBtn = document.getElementById("startRecording");
+        const stopBtn = document.getElementById("stopRecording");
+        const responseArea = document.getElementById("responseArea");
+
+        startBtn.onclick = async function() {
             audioChunks = [];
-            let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.ondataavailable = event => {
-                if (event.data.size > 0) {
-                    audioChunks.push(event.data);
-                }
-            };
-            mediaRecorder.onstop = async () => {
-                let blob = new Blob(audioChunks, { type: 'audio/wav' });
-                let formData = new FormData();
-                formData.append("audio_data", blob, "recorded_audio.wav");
+            responseArea.textContent = "";  // reset feedback
+            try {
+                let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
 
-                // Send recorded audio to the server
-                await fetch("/record-audio/", {
-                    method: "POST",
-                    body: formData
-                }).then(response => response.text())
-                  .then(data => {
-                      document.body.innerHTML += data;
-                  });
-            };
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
 
-            mediaRecorder.start();
-            document.getElementById("startRecording").disabled = true;
-            document.getElementById("stopRecording").disabled = false;
+                mediaRecorder.onstop = async () => {
+                    let blob = new Blob(audioChunks, { type: 'audio/wav' });
+                    let formData = new FormData();
+                    formData.append("audio_data", blob, "recorded_audio.wav");
+
+                    try {
+                        const response = await fetch("/record-audio/", {
+                            method: "POST",
+                            body: formData
+                        });
+                        const data = await response.text();
+                        responseArea.textContent = data;
+                    } catch (err) {
+                        responseArea.textContent = "Error uploading audio: " + err.message;
+                    }
+                };
+
+                mediaRecorder.start();
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            } catch (err) {
+                responseArea.textContent = "Error accessing microphone: " + err.message;
+            }
         };
 
-        document.getElementById("stopRecording").onclick = function() {
-            mediaRecorder.stop();
-            document.getElementById("startRecording").disabled = false;
-            document.getElementById("stopRecording").disabled = true;
+        stopBtn.onclick = function() {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop();
+            }
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
         };
     </script>
 </body>
